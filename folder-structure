@@ -1,0 +1,34 @@
+Folder structure
+
+llm-sustainability-analysis/
+│
+├── README.md
+├── requirements.txt
+├── .gitignore
+│
+├── data/
+│   ├── raw/
+│   ├── processed/
+│
+├── notebooks/
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_prompt_analysis.ipynb
+│   ├── 03_clustering_usage_patterns.ipynb
+│   ├── 04_efficiency_modeling.ipynb
+│
+├── src/
+│   ├── data_processing.py
+│   ├── feature_engineering.py
+│   ├── modeling.py
+│   ├── evaluation.py
+│
+├── experiments/
+│   ├── prompt_variants.json
+│   ├── experiment_log.csv
+│
+├── outputs/
+│   ├── figures/
+│   ├── tables/
+│
+└── reports/
+    ├── final_report.pdf
