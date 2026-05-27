@@ -3,10 +3,11 @@ name = "llm-sustainability-analysis"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "ipykernel>=7.1.0",
     "jupyter>=1.1.1",
+    "langdetect>=1.0.9",
     "matplotlib>=3.10.8",
     "nltk>=3.9.4",
     "numpy>=2.4.1",

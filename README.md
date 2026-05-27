@@ -21,7 +21,7 @@ This project investigates how prompt design and user interaction patterns influe
 This project uses a combination of:
 
 - Open dialogue datasets (e.g., ShareGPT-style conversations)
-- OpenAssistant conversation data
+- OpenAssistant conversation data 
 - Synthetic prompt experiments generated for controlled comparison
 
 ⚙️ Methodology
@@ -63,6 +63,12 @@ This project uses a combination of:
 - Quantitative model of prompt efficiency
 - Clustering of user interaction types
 - Evidence-based recommendations for efficient prompting
+
+data versions
+01_raw: original downloaded files
+02_processed: cleaned and language-filtered conversations
+03_features: engineered conversation-level feature tables
+
 
 ⚠️ Disclaimer
 
