@@ -10,33 +10,30 @@ This project investigates how prompt design and user interaction patterns influe
 
 ❓ Research Questions
 
-- Which user interaction patterns lead to inefficient LLM usage?
 - How does prompt structure affect token consumption and response length?
+- Are there identifiable, more efficient topics or tasks in the prompts?
 - Can usage efficiency be modeled using machine learning?
-- Are there identifiable clusters of user behavior in LLM interactions?
-- Optional ideas: Orthographics, topic (e.g. email)
 
 📊 Data Sources
 
 This project uses a combination of:
 
 - Open dialogue datasets (e.g., ShareGPT-style conversations)
-- OpenAssistant conversation data 
 - Synthetic prompt experiments generated for controlled comparison
 
 ⚙️ Methodology
 
 1. Exploratory Data Analysis
 - Prompt length distribution
-- Conversation depth analysis
 - Token usage patterns
-- Interaction structure analysis
-2. User Behavior Clustering
-- K-Means clustering on interaction features
-- Identification of usage archetypes
+- Novelty Embedding
+2. Topic Modeling
+- Sentence Transformer
+- CountVectorizer 
+- UMAP
+- BERTopic Modeling
 3. Efficiency Modeling
-- Regression models to predict token usage
-- Classification of efficient vs inefficient prompts
+- Regression models to predict target_success and target_cost
 - Feature importance analysis (SHAP / permutation importance)
 4. Controlled Experiments
 - Comparison of prompt variants
@@ -44,10 +41,8 @@ This project uses a combination of:
 
 📈 Metrics
 
-- Input / output token count
-- Conversation length (turns)
-- Response latency (if available)
-- Prompt efficiency score (quality / cost proxy)
+- target success: ChatGPT responds without asking for clarification [~df["first_response"].str.contains(r"?")]
+- target cost: Minimum number of tokens in the first response
 
 🧠 Key Tools & Libraries
 
@@ -61,7 +56,6 @@ This project uses a combination of:
 
 - Identification of inefficient LLM usage patterns
 - Quantitative model of prompt efficiency
-- Clustering of user interaction types
 - Evidence-based recommendations for efficient prompting
 
 data versions
