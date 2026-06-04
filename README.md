@@ -1,4 +1,4 @@
-# llm-sustainability-analysis
+# Llm Sustainability Analysis
 This project analyzes how user behavior and prompt design affect resource efficiency in large language model interactions, using both real-world datasets and controlled experiments.
 
 
