@@ -11,3 +11,6 @@ env/
 
 # Data
 01_data
+
+# Notebooks archive
+02_notebooks/archive
