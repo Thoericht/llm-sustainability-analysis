@@ -1,16 +1,16 @@
-# Python
+# python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
-# Virtuelle Umgebungen
+# virtual environments
 .venv/
 venv/
 env/
 
-# Data
+# data
 01_data
 
-# Notebooks archive
+# notebooks archive
 02_notebooks/archive
