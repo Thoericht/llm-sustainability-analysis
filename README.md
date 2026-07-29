@@ -39,6 +39,18 @@ This project uses a combination of:
 
 Data processing pipeline:
 
+01_raw
+
+└── Original downloaded datasets
+
+02_processed
+
+└── Cleaned, filtered, and language-selected conversations
+
+03_features
+
+└── Engineered conversation-level feature tables
+
 
 ---
 
