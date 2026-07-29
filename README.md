@@ -76,11 +76,12 @@ Feature extraction using:
 - BERTopic
 - UMAP dimensionality reduction
 
+
 ## Machine Learning Modeling
 
-Prediction models were developed to analyze which features contribute to efficient LLM behavior.
+A binary classification approach was used to predict whether an LLM response contains a detected refusal pattern.
 
-Three feature configurations were compared:
+Three feature configurations were evaluated:
 
 ### Model v01: Structural Features
 
@@ -93,29 +94,25 @@ Includes:
 
 ### Model v02: Structural + Semantic Features
 
-Additionally includes:
+Adds:
 
 - task type
 - topic category
 - embedding novelty
-- topic probabilities
+- topic probability features
 
-### Model v03: Structural + Semantic + Embeddings
+### Model v03: Structural + Semantic + Embedding Features
 
-Adds dense text embeddings to capture latent semantic patterns.
+Adds dense text embeddings to capture latent semantic information from prompts.
 
-Models:
+Model:
 
 - Logistic Regression
-- Linear Regression
-- XGBoost
-- Random Forest (planned comparison)
 
 Model interpretation:
 
-- SHAP analysis
-- coefficient analysis
-- permutation importance
+- model coefficients
+- SHAP feature importance analysis
 
 ---
 
@@ -206,6 +203,15 @@ The project aims to provide:
 - better understanding of how semantic prompt properties influence LLM behavior
 
 ---
+
+# 🔭 Future Ideas
+
+Potential extensions include:
+
+- comparison with non-linear models such as XGBoost or Random Forest
+- regression models for token-based cost prediction
+- calibration and threshold optimization for classification
+- evaluation on additional datasets
 
 # ⚠️ Limitations
 
