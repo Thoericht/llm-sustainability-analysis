@@ -120,20 +120,45 @@ Model interpretation:
 
 ## Refusal-Free Response Prediction
 
-A binary classification target was created based on explicit refusal patterns:
+Two binary classification targets were created based on explicit refusal patterns:
 
-Examples:
+```python
+refusal_pattern = (
+    r"(i\s+cannot"
+    r"|i\s+can't"
+    r"|i\s+do\s+not\s+have\s+access"
+    r"|i\s+don't\s+have\s+access"
+    r"|i['’]?m\s+sorry.*?(cannot|can't)"
+    r"|as\s+an\s+ai\s+language\s+model.*?(cannot|can't))"
+)
 
-- "I can't"
-- "I cannot"
-- "I'm sorry"
-- "As an AI"
-- "I do not have access"
+capability_pattern = (
+    r"(i\s+(do\s+not|don't)\s+have\s+access"
+    r"|i\s+cannot\s+access"
+    r"|i\s+cannot\s+browse"
+    r"|i\s+cannot\s+interact"
+    r"|i\s+cannot\s+connect"
+    r"|i\s+cannot\s+directly\s+"
+    r"|i\s+do\s+not\s+have\s+the\s+ability\s+to"
+    r"|i\s+don't\s+have\s+the\s+ability\s+to"
+    r"|i\s+am\s+unable\s+to\s+)"
+)
+```
 
-Target:
+Targets:
 
 - `1`: response without detected refusal pattern
 - `0`: response containing refusal pattern
+
+
+## Length First Response Prediction
+
+```python
+"target_cost" = "first_response_tokens"
+"log_target_cost" = np.log1p(df["target_cost"])
+
+```
+
 
 ## Cost Proxy
 
@@ -149,19 +174,55 @@ Actual energy consumption is not directly measured.
 
 # 📊 Key Results
 
+### Refusal Target 1: target_no_refusal
+
 Feature ablation experiments show that increasingly rich feature representations improve prediction performance.
 
 | Model | Features | ROC AUC | F1 |
 |---|---|---:|---:|
-| v01 | Structural features | ~0.59 | ~0.65 |
-| v02 | Structural + semantic features | ~0.63 | ~0.69 |
-| v03 | + embeddings | ~0.73 | ~0.83 |
+| v01 | Structural features | ~0.57 | ~0.65 |
+| v02 | Structural + semantic features | ~0.60 | ~0.67 |
+| v03 | + embeddings | ~0.73 | ~0.84 |
+
+Main findings:
+
+- Structural prompt features provide a limited predictive power.
+- Task and topic information improve slightly model performance.
+- Embeddings provide the largest performance improvement by capturing latent semantic patterns.
+
+
+### Refusal Target 2: target_no_capability
+
+| Model | Features | ROC AUC | F1 |
+|---|---|---:|---:|
+| v01 | Structural features | ~0.56 | ~0.64 |
+| v02 | Structural + semantic features | ~0.59 | ~0.65 |
+| v03 | + embeddings | ~0.72 | ~0.88 |
+
 
 Main findings:
 
 - Structural prompt features provide a limited but measurable signal.
 - Task and topic information provide additional predictive value.
-- Embeddings provide the largest performance improvement by capturing latent semantic patterns.
+- The integration of semantic embeddings does the prediction quality increase significantly.
+
+
+
+### Cost Target: Length First Response
+
+| Model | Features | r2 Score | alpha |
+|---|---|---:|---:|
+| v01 | Structural features | ~0.06| 10|
+| v02 | Structural + semantic features | ~0.11 | 10 |
+| v03 | + embeddings | ~0.32 | 100 |
+
+
+Main findings:
+
+- Structural prompt features provide a limited signal.
+- Task and topic information improves performance.
+- The integration of semantic embeddings does the prediction quality increase significantly.
+
 
 ---
 
@@ -209,7 +270,6 @@ The project aims to provide:
 Potential extensions include:
 
 - comparison with non-linear models such as XGBoost or Random Forest
-- regression models for token-based cost prediction
 - calibration and threshold optimization for classification
 - evaluation on additional datasets
 
