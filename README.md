@@ -204,8 +204,7 @@ Main findings:
 
 - Structural prompt features provide a limited but measurable signal.
 - Task and topic information provide additional predictive value.
-- The integration of semantic embeddings does the prediction quality increase significantly.
-
+- The incorporation of semantic embeddings significantly improves the quality of predictions.
 
 
 ### Cost Target: Length First Response
@@ -221,7 +220,27 @@ Main findings:
 
 - Structural prompt features provide a limited signal.
 - Task and topic information improves performance.
-- The integration of semantic embeddings does the prediction quality increase significantly.
+- The integration of semantic embeddings improves the quality of predictions significantly.
+
+
+---
+
+
+## Interpretation of Model Performance
+
+The achieved performance levels should be interpreted in the context of the complexity and inherent uncertainty of LLM interactions.
+
+Predicting response behavior and token consumption from prompt characteristics is a challenging task because many relevant factors are not directly observable. These include model-side behavior, hidden system instructions, sampling effects, conversation history, user intent, and contextual information that is not available in the prompt alone.
+
+For the cost prediction task, the best-performing model achieves an R² score of approximately 0.32. This means that the model explains around 32% of the variance in first-response token length based on prompt-related features. While this may appear moderate compared to deterministic prediction problems, it represents a meaningful signal for a highly variable natural language generation task.
+
+In domains involving human language and behavioral data, moderate R² values are often expected because outcomes are influenced by numerous latent factors. The goal of this analysis is therefore not perfect prediction, but identifying measurable patterns and factors associated with more efficient LLM usage.
+
+The results demonstrate that semantic information captured through embeddings provides substantial additional predictive value compared to purely structural prompt features. This suggests that efficiency-related properties of LLM interactions are not determined only by surface-level characteristics such as prompt length or question count, but also by deeper semantic properties of the requested task.
+
+Similarly, the refusal prediction models show that semantic representations can capture meaningful differences between prompts that are difficult to identify using manually engineered features alone. The improvement from approximately 0.57 ROC AUC to 0.73 ROC AUC indicates that embedding-based approaches provide a relevant signal for understanding response behavior.
+
+Overall, the models should be considered explanatory and predictive tools rather than exact estimators of LLM behavior. Their main contribution is the identification of patterns that can support more efficient prompt design and a better understanding of factors influencing LLM resource usage.
 
 
 ---
