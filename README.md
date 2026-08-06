@@ -79,7 +79,24 @@ Feature extraction using:
 
 ## Machine Learning Modeling
 
-A binary classification approach was used to predict whether an LLM response contains a detected refusal pattern.
+- Ridge Regression
+- Logistic Regression Classifier
+- Random Forest Classifier
+
+### Model Evaluation and Interpretation
+The models were evaluated using task-specific performance metrics:
+
+Regression: r2 Score , MAE, and RMSE
+Classification: ROC-AUC, precision, recall, and F1-score
+
+Model interpretation was conducted using:
+
+- Model coefficients for Ridge Regression and Logistic Regression
+- SHAP feature importance analysis to assess the contribution of individual features to model predictions
+- Grouped SHAP importance to evaluate the contribution of original feature groups, such as structural features, semantic metadata, and embeddings
+
+---
+
 
 Three feature configurations were evaluated:
 
@@ -105,16 +122,11 @@ Adds:
 
 Adds dense text embeddings to capture latent semantic information from prompts.
 
-Model:
 
-- Logistic Regression
+### Model v04: Dense Embedding Features only 
 
-Model interpretation:
+Adds dense text embeddings to capture latent semantic information from prompts.
 
-- model coefficients
-- SHAP feature importance analysis
-
----
 
 # 📈 Target Variables
 
@@ -147,100 +159,32 @@ capability_pattern = (
 
 Targets:
 
-- `1`: response without detected refusal pattern
-- `0`: response containing refusal pattern
+- `1`: response containing pattern
+- `0`: response without detected pattern
 
-
-## Length First Response Prediction
+## Cost Proxy Prediction
 
 ```python
 "target_cost" = "first_response_tokens"
 "log_target_cost" = np.log1p(df["target_cost"])
 
 ```
-
-
-## Cost Proxy
-
-Resource consumption is approximated using:
-
-- response token counts
-- prompt length
-- interaction complexity
-
 Actual energy consumption is not directly measured.
+
 
 ---
 
 # 📊 Key Results
 
-### Refusal Target 1: target_no_refusal
+## Logistic Regression
+Overall, logistic regression showed limited predictive performance. The inclusion of embeddings substantially improved the ROC-AUC for refusal patterns, from 0.56 to 0.75, and for capability-related responses, from 0.62 to 0.71. However, performance in detecting clarification questions remained at chance level, with a ROC-AUC of approximately 0.49.
 
-Feature ablation experiments show that increasingly rich feature representations improve prediction performance.
+## Ridge Regression
+Ridge regression showed no meaningful predictive power for logarithmic costs across any of the feature sets, with r2 scores values ranging from −0.0003 to −0.0155. In particular, the inclusion of embeddings did not improve model performance, although embeddings showed the highest aggregated feature importance in the SHAP analysis.
 
-| Model | Features | ROC AUC | F1 |
-|---|---|---:|---:|
-| v01 | Structural features | ~0.57 | ~0.65 |
-| v02 | Structural + semantic features | ~0.60 | ~0.67 |
-| v03 | + embeddings | ~0.73 | ~0.84 |
+## Random Forest Classifier
+The Random Forest models show more promising initial results. Their evaluation and interpretation are currently ongoing.
 
-Main findings:
-
-- Structural prompt features provide a limited predictive power.
-- Task and topic information improve slightly model performance.
-- Embeddings provide the largest performance improvement by capturing latent semantic patterns.
-
-
-### Refusal Target 2: target_no_capability
-
-| Model | Features | ROC AUC | F1 |
-|---|---|---:|---:|
-| v01 | Structural features | ~0.56 | ~0.64 |
-| v02 | Structural + semantic features | ~0.59 | ~0.65 |
-| v03 | + embeddings | ~0.72 | ~0.88 |
-
-
-Main findings:
-
-- Structural prompt features provide a limited but measurable signal.
-- Task and topic information provide additional predictive value.
-- The incorporation of semantic embeddings significantly improves the quality of predictions.
-
-
-### Cost Target: Length First Response
-
-| Model | Features | r2 Score | alpha |
-|---|---|---:|---:|
-| v01 | Structural features | ~0.06| 10|
-| v02 | Structural + semantic features | ~0.11 | 10 |
-| v03 | + embeddings | ~0.32 | 100 |
-
-
-Main findings:
-
-- Structural prompt features provide a limited signal.
-- Task and topic information improves performance.
-- The integration of semantic embeddings improves the quality of predictions significantly.
-
-
----
-
-
-## Interpretation of Model Performance
-
-The achieved performance levels should be interpreted in the context of the complexity and inherent uncertainty of LLM interactions.
-
-Predicting response behavior and token consumption from prompt characteristics is a challenging task because many relevant factors are not directly observable. These include model-side behavior, hidden system instructions, sampling effects, conversation history, user intent, and contextual information that is not available in the prompt alone.
-
-For the cost prediction task, the best-performing model achieves an R² score of approximately 0.32. This means that the model explains around 32% of the variance in first-response token length based on prompt-related features. While this may appear moderate compared to deterministic prediction problems, it represents a meaningful signal for a highly variable natural language generation task.
-
-In domains involving human language and behavioral data, moderate R² values are often expected because outcomes are influenced by numerous latent factors. The goal of this analysis is therefore not perfect prediction, but identifying measurable patterns and factors associated with more efficient LLM usage.
-
-The results demonstrate that semantic information captured through embeddings provides substantial additional predictive value compared to purely structural prompt features. This suggests that efficiency-related properties of LLM interactions are not determined only by surface-level characteristics such as prompt length or question count, but also by deeper semantic properties of the requested task.
-
-Similarly, the refusal prediction models show that semantic representations can capture meaningful differences between prompts that are difficult to identify using manually engineered features alone. The improvement from approximately 0.57 ROC AUC to 0.73 ROC AUC indicates that embedding-based approaches provide a relevant signal for understanding response behavior.
-
-Overall, the models should be considered explanatory and predictive tools rather than exact estimators of LLM behavior. Their main contribution is the identification of patterns that can support more efficient prompt design and a better understanding of factors influencing LLM resource usage.
 
 
 ---
@@ -288,9 +232,8 @@ The project aims to provide:
 
 Potential extensions include:
 
-- comparison with non-linear models such as XGBoost or Random Forest
+- comparison with non-linear models such as XGBoost or Random Forest (in process)
 - calibration and threshold optimization for classification
-- evaluation on additional datasets
 
 # ⚠️ Limitations
 
