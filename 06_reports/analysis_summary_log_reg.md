@@ -1,4 +1,4 @@
-# Analysis Summary: Predicting Refusal-Free Responses
+# Analysis Summary: Logistic Regression
 
 ## Objective
 
