@@ -1,250 +1,188 @@
 # LLM Sustainability Analysis
 
-This project investigates how prompt characteristics, user interaction patterns, and semantic properties influence efficiency-related outcomes in large language model (LLM) interactions.
+This project explores how prompt characteristics, interaction patterns, and semantic properties relate to resource-related outcomes and response behavior in large language model (LLM) interactions.
 
-The analysis combines exploratory data analysis, semantic modeling, feature engineering, and machine learning to identify factors associated with efficient and successful LLM usage.
+The project combines exploratory data analysis, feature engineering, semantic representations, and initial machine-learning models. It is documented as a portfolio analysis and as a basis for possible future experiments on more efficient LLM usage.
 
----
-
-# 📌 Project Overview
-
-Large Language Models are increasingly integrated into everyday workflows. However, different usage patterns can lead to substantial differences in computational requirements, response behavior, and interaction efficiency.
-
-This project analyzes real-world LLM conversations to understand how prompt design and user behavior influence:
-
-- token consumption
-- response characteristics
-- refusal behavior
-- efficiency-related outcomes
-
-The goal is to identify measurable patterns that can support more efficient LLM usage.
+> **Project status:** The data preparation, exploratory analysis, feature engineering, and initial modeling have been completed. Additional controlled experiments and a deeper comparison of models were not pursued further because the project became increasingly time- and computationally intensive. These extensions remain possible directions for future work.
 
 ---
 
-# ❓ Research Questions
+## Project Overview
 
-- How does prompt structure influence token consumption and response length?
-- Are certain tasks or topics associated with more efficient LLM interactions?
-- Can semantic properties of prompts improve prediction of response behavior?
-- Can machine learning models identify factors associated with successful, refusal-free responses?
+Large Language Models are increasingly integrated into everyday workflows. Different prompt and interaction patterns may be associated with differences in response length, token usage, and response behavior.
 
----
+The project investigates measurable relationships between user prompts and selected outcomes, including:
 
-# 📊 Data Sources
+- token consumption and response length
+- interaction complexity
+- refusal and capability-related response patterns
+- semantic properties of prompts
+- proxy measures related to computational efficiency
 
-This project uses a combination of:
+The project does **not** directly measure energy consumption. Instead, token usage and interaction characteristics are treated as observable proxies that can help structure an initial analysis of LLM sustainability.
 
-- Open dialogue datasets (ShareGPT-style conversations)
-- Synthetic prompt experiments for controlled comparisons
+## Research Questions
 
-Data processing pipeline:
+The analysis was guided by the following questions:
 
-01_raw
+- How are prompt structure and interaction characteristics related to token consumption and response length?
+- Are certain tasks or topics associated with different response patterns?
+- Do semantic prompt representations provide additional information about refusal-related responses?
+- Which feature groups appear most informative for predicting selected response outcomes?
 
+These questions frame the analysis; they should not be interpreted as claims that all proposed relationships were conclusively established.
+
+## Data and Processing
+
+The project uses an open dialogue dataset containing ShareGPT-style conversations. The data were cleaned, filtered, and restricted to the language selected for the analysis.
+
+The processing structure is organized as follows:
+
+```text
+01_raw/
 └── Original downloaded datasets
 
-02_processed
-
+02_processed/
 └── Cleaned, filtered, and language-selected conversations
 
-03_features
-
+03_features/
 └── Engineered conversation-level feature tables
+```
 
+The notebooks document the main steps from data preparation and exploration to feature construction and modeling.
 
----
+## Methodology
 
-# ⚙️ Methodology
+### Exploratory Data Analysis
 
-## Exploratory Data Analysis
+The exploratory analysis examines, among other aspects:
 
-Analysis of:
-
-- prompt length distributions
+- prompt and response length distributions
 - token usage patterns
-- interaction complexity
+- interaction and conversation complexity
 - task and topic distributions
+- response and refusal-related patterns
 
-## Semantic Analysis
+### Feature Engineering and Semantic Analysis
 
-Feature extraction using:
+The feature set combines structural and semantic information, including:
 
-- Sentence Transformers for text embeddings
-- Embedding novelty measures
-- CountVectorizer
-- Topic modeling
-- BERTopic
-- UMAP dimensionality reduction
+- prompt length and question count
+- spelling- and instruction-related features
+- task and topic information
+- embedding novelty measures
+- topic probabilities
+- dense text embeddings generated with Sentence Transformers
+- CountVectorizer-based representations
+- topic-modeling outputs and UMAP projections for exploration
 
+### Initial Machine-Learning Models
 
-## Machine Learning Modeling
+The project contains initial applications of:
 
-- Ridge Regression
-- Logistic Regression Classifier
-- Random Forest Classifier
+- Logistic Regression for binary response-pattern targets
+- Ridge Regression for a token-based cost proxy
+- Random Forest classification
 
-### Model Evaluation and Interpretation
-The models were evaluated using task-specific performance metrics:
+The models were evaluated with task-specific metrics such as ROC-AUC, precision, recall, F1-score, MAE, RMSE, and R². Coefficients and SHAP-based feature importance were used where applicable to support model interpretation.
 
-Regression: r2 Score , MAE, and RMSE
-Classification: ROC-AUC, precision, recall, and F1-score
+### Feature Configurations
 
-Model interpretation was conducted using:
+Several feature configurations were compared conceptually and, for selected models, empirically:
 
-- Model coefficients for Ridge Regression and Logistic Regression
-- SHAP feature importance analysis to assess the contribution of individual features to model predictions
-- Grouped SHAP importance to evaluate the contribution of original feature groups, such as structural features, semantic metadata, and embeddings
+- **Structural features:** prompt length, question count, spelling-related and instruction-related features
+- **Structural plus semantic features:** structural features supplemented with task, topic, novelty, and topic-probability features
+- **Structural plus semantic plus embedding features:** the preceding features supplemented with dense text embeddings
+- **Embedding-only features:** dense text embeddings used as the main predictor set
 
----
+## Target Variables
 
+### Refusal- and Capability-Related Responses
 
-Three feature configurations were evaluated:
+Binary targets were derived from explicit textual patterns in model responses. These targets indicate whether a response contained selected refusal or capability-related phrases.
 
-### Model v01: Structural Features
+A value of `1` indicates that a relevant pattern was detected; a value of `0` indicates that it was not detected. The targets are therefore pattern-based operationalizations and should not be understood as complete semantic classifications of refusals or model capabilities.
 
-Includes:
+### Token-Based Cost Proxy
 
-- prompt length
-- question count
-- spelling error rate
-- instruction-related features
-
-### Model v02: Structural + Semantic Features
-
-Adds:
-
-- task type
-- topic category
-- embedding novelty
-- topic probability features
-
-### Model v03: Structural + Semantic + Embedding Features
-
-Adds dense text embeddings to capture latent semantic information from prompts.
-
-
-### Model v04: Dense Embedding Features only 
-
-Adds dense text embeddings to capture latent semantic information from prompts.
-
-
-# 📈 Target Variables
-
-## Refusal-Free Response Prediction
-
-Two binary classification targets were created based on explicit refusal patterns:
+The first response's token count was used as a measurable proxy for response-related computational demand:
 
 ```python
-refusal_pattern = (
-    r"(i\s+cannot"
-    r"|i\s+can't"
-    r"|i\s+do\s+not\s+have\s+access"
-    r"|i\s+don't\s+have\s+access"
-    r"|i['’]?m\s+sorry.*?(cannot|can't)"
-    r"|as\s+an\s+ai\s+language\s+model.*?(cannot|can't))"
-)
-
-capability_pattern = (
-    r"(i\s+(do\s+not|don't)\s+have\s+access"
-    r"|i\s+cannot\s+access"
-    r"|i\s+cannot\s+browse"
-    r"|i\s+cannot\s+interact"
-    r"|i\s+cannot\s+connect"
-    r"|i\s+cannot\s+directly\s+"
-    r"|i\s+do\s+not\s+have\s+the\s+ability\s+to"
-    r"|i\s+don't\s+have\s+the\s+ability\s+to"
-    r"|i\s+am\s+unable\s+to\s+)"
-)
+target_cost = first_response_tokens
+log_target_cost = np.log1p(target_cost)
 ```
 
-Targets:
+This is not a measurement of actual energy consumption. Energy use also depends on model architecture, hardware, batching, inference optimization, and provider-specific infrastructure.
 
-- `1`: response containing pattern
-- `0`: response without detected pattern
+## Results Summary
 
-## Cost Proxy Prediction
+### Logistic Regression
 
-```python
-"target_cost" = "first_response_tokens"
-"log_target_cost" = np.log1p(df["target_cost"])
+The initial logistic-regression models showed limited predictive performance overall. Adding embeddings improved ROC-AUC for the analyzed refusal-related targets in the documented comparisons. In contrast, the clarification-question target remained close to chance level.
 
-```
-Actual energy consumption is not directly measured.
+These results suggest that semantic representations may contain useful information for some response-pattern targets, while also showing that predictive performance depends strongly on the target definition and feature configuration.
 
+### Ridge Regression
 
----
+The Ridge models did not show meaningful predictive power for the logarithmically transformed token-based cost proxy in the documented comparisons. Adding embeddings did not improve the overall regression performance, even though embedding features showed comparatively high aggregated SHAP importance in the interpretation analysis.
 
-# 📊 Key Results
+This difference illustrates why feature importance should not be interpreted as equivalent to out-of-sample predictive performance.
 
-## Logistic Regression
-Overall, logistic regression showed limited predictive performance. The inclusion of embeddings substantially improved the ROC-AUC for refusal patterns, from 0.56 to 0.75, and for capability-related responses, from 0.62 to 0.71. However, performance in detecting clarification questions remained at chance level, with a ROC-AUC of approximately 0.49.
+### Random Forest
 
-## Ridge Regression
-Ridge regression showed no meaningful predictive power for logarithmic costs across any of the feature sets, with r2 scores values ranging from −0.0003 to −0.0155. In particular, the inclusion of embeddings did not improve model performance, although embeddings showed the highest aggregated feature importance in the SHAP analysis.
+Random Forest models were explored as a non-linear alternative for classification. A more extensive evaluation, tuning, calibration, and interpretation were not completed because the project became too time- and computationally intensive to continue within the available scope.
 
-## Random Forest Classifier
-The Random Forest models show more promising initial results. Their evaluation and interpretation are currently ongoing.
+## Project Status and Scope
 
+The completed work provides:
 
+- a reproducible data-preparation and feature-engineering workflow
+- exploratory analysis of prompt, conversation, and response characteristics
+- initial semantic feature construction
+- baseline regression and classification models
+- a first assessment of the limits of token-based sustainability proxies
 
----
+The following work was **not completed**:
 
-# 🧠 Key Tools & Libraries
-
-Python ecosystem:
-
-- pandas
-- numpy
-- scikit-learn
-- matplotlib
-- seaborn
-
-NLP:
-
-- sentence-transformers
-- tiktoken
-- BERTopic
-- UMAP
-- CountVectorizer
-
-Machine Learning:
-
-- Logistic Regression
-- Linear Regression
-- XGBoost
-- Random Forest
-- SHAP
-
----
-
-# 📌 Expected Outcomes
-
-The project aims to provide:
-
-- identification of inefficient LLM usage patterns
-- quantitative models of prompt efficiency
-- evidence-based recommendations for more efficient prompting
-- better understanding of how semantic prompt properties influence LLM behavior
-
----
-
-# 🔭 Future Ideas
-
-Potential extensions include:
-
-- comparison with non-linear models such as XGBoost or Random Forest (in process)
+- controlled synthetic prompt experiments
+- systematic hyperparameter tuning and cross-validation across all model variants
+- a comprehensive comparison of Random Forest, XGBoost, and other non-linear models
 - calibration and threshold optimization for classification
+- direct measurement or estimation of actual energy consumption
+- causal conclusions about the effects of prompt design
 
-# ⚠️ Limitations
+The project was intentionally paused at this stage so that work could continue on another project. The unfinished components are retained as possible extensions rather than presented as completed results.
 
-This project uses proxy measures for LLM resource consumption.
+## Future Ideas
 
-Actual energy usage depends on factors such as:
+Possible directions for future work include:
 
-- model architecture
-- hardware infrastructure
-- inference optimization
-- provider-specific implementation
+- conducting controlled prompt experiments with matched tasks and systematically varied prompt properties
+- evaluating whether shorter prompts or responses actually correspond to lower energy use under specified technical assumptions
+- comparing linear, tree-based, and gradient-boosting models using consistent validation procedures
+- tuning classification thresholds and assessing probability calibration
+- improving refusal and capability detection with manual annotation or more robust language models
+- analyzing model-, provider-, and infrastructure-specific differences
+- combining token counts with published or measured energy estimates
+- testing whether prompt optimization changes response quality, not only response length
 
-Therefore, token usage and interaction complexity are used as measurable approximations rather than direct energy measurements.
+## Tools and Libraries
 
+- Python, pandas, NumPy
+- scikit-learn
+- matplotlib and seaborn
+- Sentence Transformers
+- tiktoken
+- BERTopic and UMAP
+- CountVectorizer
+- SHAP
+- Jupyter notebooks
+
+## Limitations
+
+The analysis is observational and based on an open dialogue dataset. It can identify associations in the available data but cannot establish causal effects.
+
+The refusal and capability targets depend on manually specified text patterns and may miss implicit or differently phrased responses. The token-based cost proxy is also an approximation and cannot replace direct energy measurements.
+
+Consequently, the findings should be interpreted as an exploratory analysis of measurable indicators related to LLM sustainability and response behavior, rather than as a complete assessment of the environmental impact of LLM use.
