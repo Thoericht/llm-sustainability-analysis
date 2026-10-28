@@ -98,7 +98,7 @@ Only information available when the prompt is written is used as a feature. Quan
 
 ## Potential future work
 
-- Repeated cross-validation with confidence intervals; SHAP for the Random Forest
+- Repeated cross-validation with confidence intervals
 - Cleaned token counts as the cost target
 - Manual annotation of a sample to estimate the precision of the regex targets
 - Language detection that handles short prompts better, or relaxed rules for short prompts
