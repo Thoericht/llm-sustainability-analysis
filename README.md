@@ -1,181 +1,112 @@
 # LLM Sustainability Analysis
 
-This project explores how prompt characteristics, interaction patterns, and semantic properties relate to response behavior and token-based resource proxies in large language model (LLM) interactions.
+How are prompt characteristics related to response length and to simple response patterns in LLM conversations? This project builds a reproducible data pipeline on a ShareGPT-style dialogue dataset, explores the relationships, and trains first baseline models. Response length (in tokens) is used as a **proxy** for computational demand. Energy use is **not** measured.
 
-It combines exploratory data analysis, feature engineering, semantic representations, and initial machine-learning models. The project is documented as a portfolio analysis and as a basis for future experiments on more efficient LLM usage.
+> **Status: paused, exploratory.** Data preparation, feature and target engineering, exploratory analysis and first baseline models are done. Controlled prompt experiments, tuning, calibration and any direct energy estimate are not done.
 
-> **Project status:** Data preparation, exploratory analysis, feature engineering, and initial modeling have been completed. The current results are exploratory. Further controlled experiments, systematic tuning, calibration, and direct energy measurement remain future work.
+## Key findings (current data, 46,429 conversations)
 
-## Project Overview
+- **Prompt length barely predicts response length.** Spearman correlation 0.07. Only very short prompts (up to ~13 tokens) get noticeably shorter answers (median 271 vs. 329-370 tokens); beyond ~18 tokens the median is flat.
+- **Response length is extremely right-skewed:** median 337, mean 498, maximum 76,828 tokens (skewness 39.7, or -0.35 after `log1p`).
+- **Role instructions stand out.** Prompts with "act as ..." receive shorter responses (median 247 vs. 347 tokens) and trigger the clarification pattern about twice as often (24.6% vs. 12.6%). Format instructions go with longer responses (median 379 vs. 325 tokens). These are associations, not causal effects.
+- **Clarification patterns depend on the task:** from about 10% of responses for explanations to about 29% for roleplay.
+- **The response-pattern targets are rare:** refusal 2.3% (1,049), capability 1.0% (483), needs-clarification 14.5% (6,728).
+- **Topic modelling found one large general cluster:** 55% noise, 41% general, only 4% technical or domain topics, so topic features carry little information.
 
-The analysis investigates measurable relationships between user prompts and selected outcomes, including:
+![Prompt length vs. response length](figures/prompt_vs_response_length.png)
 
-- token consumption and response length
-- interaction complexity
-- refusal-, capability-, and clarification-related response patterns
-- semantic properties of prompts
-- proxy measures related to computational efficiency
+![Clarification rate by task type](figures/clarification_rate_by_task_type.png)
 
-The project does **not** directly measure energy consumption. Token usage and interaction characteristics are treated as observable proxies that can support an initial sustainability analysis.
+## Model results
 
-## Research Questions
+Baseline classifiers predict whether a response shows a pattern (refusal, capability statement, clarification) from the prompt. Train/test split and cross-validation are **grouped by prompt**, so identical prompts never appear on both sides. Values below are for feature set v03 (structural + semantic features + 384-dimensional embeddings). CV = 5-fold cross-validated ROC-AUC on the training part; Test = holdout; AP = Average Precision on the holdout (a random ranking scores the positive rate).
 
-- How are prompt structure and interaction characteristics related to token consumption and response behavior?
-- Are certain tasks or topics associated with different response patterns?
-- Do semantic prompt representations provide additional information for predicting response outcomes?
-- Which feature groups appear most informative for the selected targets?
+| Target (positive rate) | LR CV | LR Test | LR AP | RF CV | RF Test | RF AP |
+|---|---:|---:|---:|---:|---:|---:|
+| `target_refusal` (2.3%) | 0.694 | 0.704 | 0.053 | 0.706 | 0.713 | 0.071 |
+| `target_capability` (1.0%) | 0.721 | 0.747 | 0.028 | 0.719 | 0.781 | 0.086 |
+| `target_needs_clarification` (14.5%) | 0.761 | 0.778 | 0.434 | 0.771 | 0.775 | 0.446 |
 
-These questions guide the analysis and should not be interpreted as causal claims.
+- **Moderate signal.** Clarification is the most predictable target (AP about three times the base rate). Refusal and capability are only weakly predictable; the capability holdout has about 100 positives, so its test scores are noisy and the cross-validated values are more reliable.
+- **Embeddings carry the signal.** Adding them raises cross-validated ROC-AUC by about 0.07 to 0.12. Embeddings alone (v04) are as good as v03 (CV difference at most 0.006). v03 is used for interpretation because it keeps the interpretable prompt features, not because it performs better.
+- **Logistic Regression and Random Forest perform alike** with the grouped split. An earlier run with a random split showed a much higher Random Forest score (test ROC-AUC about 0.83), most likely because it recognised repeated prompts.
+- **Engineered features help only the non-linear model:** for the Random Forest, v02 beats v01 (for example refusal 0.62 vs. 0.53 CV ROC-AUC); for Logistic Regression they barely matter.
+- **Interpretation (Logistic Regression, v03):** in SHAP the embedding block makes up 96-97% of the summed importance, which is largely a counting effect of 384 columns. Random Forest SHAP gives the same picture (embeddings 93-98%); beyond the embeddings, prompt length matters most for refusal and capability, and embedding novelty and role instructions for clarification. For clarification (Logistic Regression), summarisation (odds ratio 0.63) and explanation prompts (0.83) lower the odds, writing/generation (1.30), roleplay (1.22) and role instructions (1.25) raise them.
+- Thresholds were not tuned. At 0.5 the Random Forest predicts almost no positives and Logistic Regression predicts many with low precision, so the models are suitable for ranking only. Full tables: [`03_reports/analysis_summary_models.md`](03_reports/analysis_summary_models.md).
+- Ridge regression on the log response length showed no meaningful predictive power in earlier experiments, consistent with the weak prompt-length relationship above. The notebook for it is not part of this repository.
 
-## Data and Processing
+## Pipeline
 
-The project uses an open dialogue dataset containing ShareGPT-style conversations. The data were cleaned, filtered, and restricted to the language selected for the analysis.
+Run the notebooks in this order. Each notebook reads the file written by the previous one.
+
+| # | Notebook | Purpose | Output |
+|---|---|---|---|
+| 1 | `01_data_cleaning_filtering` | Language filter for the first user prompt, comparison of filter settings | filtered conversations (JSON) |
+| 2 | `02_feature_target` | Prompt features, validation, embeddings, BERTopic, targets | feature table *v1-1-0*, embeddings |
+| 3 | `03_data_exploration` | Quality checks, distributions, target analysis, adds log columns | feature table *v1-2-0*, figures |
+| 4a | `04_sustainability_modelling_log_reg` | Logistic Regression baselines, coefficients, SHAP | `03_reports/results_log_reg.csv` |
+| 4b | `04_sustainability_modelling_ran_forest` | Random Forest classifiers, SHAP | `03_reports/results_random_forest.csv` |
 
 ```text
-01_raw/
-└── Original downloaded datasets
-
-02_processed/
-└── Cleaned, filtered, and language-selected conversations
-
-03_features/
-└── Engineered conversation-level feature tables
+01_data/          not tracked (raw data, processed data, embeddings)
+02_notebooks/     analysis notebooks
+03_reports/       model result tables and written summary
+figures/          plots used in this README
 ```
 
-## Methodology
+**Setup:** Python 3.11, then `uv sync` (dependencies are listed in `pyproject.toml`). The embedding and topic-model steps in notebook 02 are compute-heavy. The data are not part of this repository: download the dataset from **[SOURCE LINK]** and place `sg_90k_part1.json` and `sg_90k_part2.json` in `01_data/01_raw/messy_dataset/`.
 
-### Exploratory Data Analysis
+## Data and processing
 
-The exploratory analysis examines:
+| Step | Conversations |
+|---|---:|
+| Raw (ShareGPT-style, two files) | 90,665 |
+| After strict English filter (notebook 01) | 47,960 (52.9%) |
+| After validation (notebook 02): empty prompt or response 1,319, noise marker or too short ~200 | 46,432 |
+| After orthographic-error-rate cutoff (<= 0.58) | 46,429 |
 
-- prompt and response length distributions
-- token usage patterns
-- interaction and conversation complexity
-- task and topic distributions
-- refusal- and response-related patterns
+The English filter combines a stopword heuristic, Latin-letter, non-ASCII and digit checks, and the Lingua language detector in strict mode (English, confidence >= 0.75). Five filter settings were compared; the final one is the most conservative and favours clean English data over volume.
 
-### Feature Engineering and Semantic Analysis
+Only the first user prompt and its first response are analysed. Responses in the source data contain HTML markup, which is removed before the regex targets are applied.
 
-The feature set combines structural and semantic information:
+## Targets
 
-- prompt length and question count
-- spelling- and instruction-related features
-- task and topic information
-- embedding novelty and topic probabilities
-- dense text embeddings generated with Sentence Transformers
-- CountVectorizer representations
-- topic-modeling outputs and UMAP projections for exploration
+- **`target_cost`:** number of tokens in the first response (`log1p`-transformed for regression). A proxy for response-related compute, not a measurement of energy.
+- **`target_refusal`, `target_capability`, `target_needs_clarification`:** regex-based flags on the first response (`1` = pattern found). They are rough operationalisations. "Needs clarification" is detected through clarification phrases and any question mark in the response, so code, lists and URLs can trigger it.
 
-### Initial Machine-Learning Models
+## Feature sets
 
-The project includes initial applications of:
+| Set | Content |
+|---|---|
+| v01 | Structural: prompt length, question count, spelling error rate, instruction flags |
+| v02 | v01 + task type, topic category, embedding novelty, topic probability |
+| v03 | v02 + 384-dimensional sentence embeddings |
+| v04 | Embeddings only |
 
-- logistic regression for binary response-pattern targets
-- random forest classification
-- ridge regression for a token-based cost proxy
-
-Classification models were evaluated with ROC-AUC, Average Precision, precision, recall, and F1-score. Regression models were evaluated with MAE, RMSE, and R². Coefficients and SHAP-based feature importance were used for interpretation where appropriate.
-
-## Feature Configurations
-
-- **v01 — Structural features:** prompt length, question count, spelling-related features, and instruction flags.
-- **v02 — Structural plus semantic features:** v01 plus task type, topic category, embedding novelty, and topic probability.
-- **v03 — Structural plus semantic plus embeddings:** v02 plus 384 dense text-embedding dimensions.
-- **v04 — Embeddings only:** dense text embeddings as the predictor set.
-
-## Target Variables
-
-### Response-Pattern Targets
-
-Binary targets were derived from explicit textual patterns in model responses. They represent selected refusal-, capability-, or clarification-related response patterns.
-
-A value of `1` indicates that the relevant pattern was detected; `0` indicates that it was not detected. These targets are pattern-based operationalizations and should not be understood as complete semantic classifications.
-
-### Token-Based Cost Proxy
-
-The first response's token count was used as a measurable proxy for response-related computational demand:
-
-```python
-target_cost = first_response_tokens
-log_target_cost = np.log1p(target_cost)
-```
-
-This is not a direct measurement of energy consumption. Actual energy use also depends on model architecture, hardware, batching, inference optimization, and provider infrastructure.
-
-## Results Summary
-
-### Logistic Regression
-
-The v03 logistic-regression models achieved the strongest overall performance for the three analyzed targets:
-
-| Target | Test ROC-AUC | Test Average Precision | Test F1 | Test Precision | Test Recall |
-|---|---:|---:|---:|---:|---:|
-| `target_refusal` | 0.753 | 0.075 | 0.093 | 0.050 | 0.614 |
-| `target_capability` | 0.755 | 0.040 | 0.060 | 0.032 | 0.536 |
-| `target_needs_clarification` | 0.768 | 0.386 | 0.408 | 0.290 | 0.686 |
-
-`target_needs_clarification` is the most predictable target. The low precision for the other targets reflects class imbalance and the default classification threshold. The models should therefore primarily be used for ranking and prioritization unless thresholds are tuned for a specific application.
-
-Feature-level SHAP analysis for v03 showed that `embedding` was the dominant aggregated feature, followed by `log_first_prompt_tokens`, `task_type`, and `topic_cat`. The embedding result combines all 384 dimensions and therefore represents block-level importance rather than equally important or directly interpretable dimensions.
-
-### Ridge Regression
-
-The Ridge models did not show meaningful predictive power for the log-transformed token-based cost proxy in the documented comparisons. Adding embeddings did not improve overall regression performance, although embedding features showed comparatively high aggregated SHAP importance. This illustrates that feature importance should not be interpreted as equivalent to out-of-sample predictive performance.
-
-### Random Forest
-
-Random Forest models were explored as a non-linear alternative for classification. The available analysis indicates that v03 generally provided the strongest overall performance across the evaluated targets, while different versions could produce higher recall for specific targets. A more extensive evaluation, tuning, calibration, and interpretation were not completed within the project scope.
-
-## Project Status and Scope
-
-The completed work provides:
-
-- a reproducible data-preparation and feature-engineering workflow
-- exploratory analysis of prompt, conversation, and response characteristics
-- semantic feature construction
-- baseline regression and classification models
-- coefficient- and SHAP-based model interpretation
-- an initial assessment of token-based sustainability proxies
-
-The following work remains incomplete:
-
-- controlled synthetic prompt experiments
-- systematic hyperparameter tuning across all model variants
-- repeated or nested cross-validation
-- probability calibration and classification-threshold optimization
-- comprehensive comparison of non-linear models
-- direct measurement or estimation of actual energy consumption
-- causal analysis of prompt design effects
-
-The project was paused at this stage so work could continue on another project. These unfinished components are retained as possible extensions rather than presented as completed results.
-
-## Future Ideas
-
-- Conduct controlled prompt experiments with matched tasks and systematically varied prompt properties.
-- Evaluate whether shorter prompts or responses correspond to lower energy use under explicit technical assumptions.
-- Compare linear, tree-based, and gradient-boosting models using consistent validation procedures.
-- Tune classification thresholds and assess probability calibration.
-- Improve refusal and capability detection with manual annotation or more robust language models.
-- Analyze model-, provider-, and infrastructure-specific differences.
-- Combine token counts with published or measured energy estimates.
-- Test whether prompt optimization changes response quality, not only response length.
-
-## Tools and Libraries
-
-- Python, pandas, NumPy
-- scikit-learn
-- matplotlib and seaborn
-- Sentence Transformers
-- tiktoken
-- BERTopic and UMAP
-- CountVectorizer
-- SHAP
-- Jupyter notebooks
+Only information available when the prompt is written is used as a feature. Quantities derived from the response or from later turns (for example total tokens or follow-up flags) are excluded; notebook 02 checks that every column has an explicit role.
 
 ## Limitations
 
-The analysis is observational and based on an open dialogue dataset. It identifies associations in the available data but cannot establish causal effects.
+- **Observational data.** The analysis shows associations, not causal effects of prompt design.
+- **Proxy, not energy.** Token counts ignore model size, hardware, batching and infrastructure.
+- **Language filter and prompt length.** The strict filter shifts the prompt-length distribution: the median first prompt grows from 15 to 36 words, and the share of prompts under 10 words drops from 36.5% to 5.7%. In a manual check of 30 random removed prompts with 5-9 words, 20 were valid English (mostly short, lowercase keyword-style queries). Correct short English prompts are therefore under-represented, and findings about prompt length describe medium and long prompts.
+- **Markup in response length.** 99.9% of first responses contain HTML markup. `target_cost` counts tokens of the raw response, so it includes markup: after cleaning, a response has a median of 78% of its raw tokens. The rank correlation between raw and cleaned token counts is 0.93, so relative conclusions should be robust, but absolute token numbers are overstated.
+- **Pattern-based, overlapping targets.** Regex flags miss implicit or differently worded behaviour. Refusal and capability patterns share phrases: 271 of the 483 capability matches (56%) are also refusal matches. Good prediction from embeddings partly reflects that certain prompt types (for example requests to open a URL) trigger standard replies.
+- **Duplicate prompts.** 19.3% of the cleaned first prompts occur more than once. Splits are grouped by prompt, but near-duplicates (paraphrases) can still end up on both sides.
+- **Rare positives.** Capability has few positive cases (483), so small differences between feature sets are within noise.
+- **Weak topic features.** The topic model found one dominant general cluster, and the topic categories were assigned by hand for this specific run.
 
-The response-pattern targets depend on manually specified text patterns and may miss implicit or differently phrased behaviors. The token-based cost proxy is an approximation and cannot replace direct energy measurements.
+## Potential future work
 
-The findings should therefore be interpreted as an exploratory analysis of measurable indicators related to LLM sustainability and response behavior, not as a complete assessment of the environmental impact of LLM use.
+- Repeated cross-validation with confidence intervals; SHAP for the Random Forest
+- Cleaned token counts as the cost target
+- Manual annotation of a sample to estimate the precision of the regex targets
+- Language detection that handles short prompts better, or relaxed rules for short prompts
+- Finer topic structure (smaller clusters or a different clustering)
+- Threshold tuning, probability calibration, gradient boosting, and a documented Ridge baseline for response length
+- Controlled prompt experiments (same task, systematically varied prompt properties)
+- Combine token counts with published energy estimates under explicit assumptions
+
+## Tools
+
+Python, pandas, NumPy, scikit-learn, SHAP, Sentence Transformers, BERTopic, UMAP, HDBSCAN, Lingua, tiktoken, matplotlib, seaborn, Jupyter.
